@@ -2,18 +2,17 @@ import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  Thermometer,
-  Calendar,
-  MapPin,
-  Loader2,
-  CloudSun,
-  Navigation,
-  X,
-} from "lucide-react";
+import { Search, Calendar, MapPin, Loader2, Navigation } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+
+// --- CONFIGURATION FROM ENV ---
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const MAP_TILES = import.meta.env.VITE_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const DEFAULT_CENTER = [
+  parseFloat(import.meta.env.VITE_DEFAULT_LAT) || 6.9271,
+  parseFloat(import.meta.env.VITE_DEFAULT_LNG) || 79.8612,
+];
 
 // Modern Blue Marker
 const customIcon = L.icon({
@@ -32,7 +31,7 @@ const MapFly = ({ pos }) => {
 };
 
 export default function App() {
-  const [pos, setPos] = useState([6.9271, 79.8612]);
+  const [pos, setPos] = useState(DEFAULT_CENTER);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [locationLabel, setLocationLabel] = useState("Colombo, Sri Lanka");
@@ -43,22 +42,32 @@ export default function App() {
 
   const toC = (f) => ((f - 32) * 5) / 9;
 
+  // Check API Health on load
   useEffect(() => {
-    axios
-      .get("http://127.0.0.1:8000/health")
-      .then((res) => setApiStatus(res.data.status))
-      .catch(() => setApiStatus("disconnected"));
+    const checkHealth = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/health`);
+        setApiStatus(res.data.status);
+      } catch (err) {
+        setApiStatus("disconnected");
+      }
+    };
+    checkHealth();
   }, []);
 
-  // Modern Search with Dropdown Logic
+  // Modern Search Logic
   const handleSearchInput = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
     if (query.length > 2) {
-      const res = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`,
-      );
-      setSearchResults(res.data);
+      try {
+        const res = await axios.get(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`,
+        );
+        setSearchResults(res.data);
+      } catch (err) {
+        console.error("Search failed", err);
+      }
     } else {
       setSearchResults([]);
     }
@@ -82,6 +91,7 @@ export default function App() {
         .toISOString()
         .split("T")[0];
 
+      // Fetch weather history from Open-Meteo
       const res = await axios.get(
         `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${start}&end_date=${today}&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`,
       );
@@ -95,7 +105,8 @@ export default function App() {
       }));
       setHistory(historyData);
 
-      const backend = await axios.post("http://127.0.0.1:8000/predict", {
+      // Send to Backend for AI Prediction
+      const backend = await axios.post(`${API_BASE_URL}/predict`, {
         daily_history: historyData.map((d) => ({
           min_temp: d.min_f,
           max_temp: d.max_f,
@@ -104,9 +115,11 @@ export default function App() {
       });
       setPrediction(backend.data);
     } catch (e) {
+      alert("AI Engine error. Make sure the backend is running.");
       console.error("API Error", e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -117,6 +130,7 @@ export default function App() {
         width: "100vw",
         background: "#020617",
         color: "white",
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       {/* SIDEBAR */}
@@ -130,6 +144,7 @@ export default function App() {
           boxShadow: "10px 0 30px rgba(0,0,0,0.5)",
         }}
       >
+        {/* API STATUS HEADER */}
         <div
           style={{
             display: "flex",
@@ -146,10 +161,12 @@ export default function App() {
               background: apiStatus === "connected" ? "#10b981" : "#ef4444",
             }}
           />
-          <span style={{ fontSize: "12px", color: "#94a3b8" }}>
+          <span
+            style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600" }}
+          >
             {apiStatus === "connected"
-              ? "AI Engine Online"
-              : "Connecting to AI..."}
+              ? "AI ENGINE ONLINE"
+              : "CONNECTING TO BACKEND..."}
           </span>
         </div>
 
@@ -173,7 +190,7 @@ export default function App() {
           </h1>
         </div>
 
-        {/* MODERN SEARCH BAR */}
+        {/* SEARCH BAR */}
         <div style={{ position: "relative", marginBottom: "25px" }}>
           <div
             style={{
@@ -189,7 +206,7 @@ export default function App() {
             <input
               value={searchQuery}
               onChange={handleSearchInput}
-              placeholder="Search location..."
+              placeholder="Search city in Sri Lanka..."
               style={{
                 background: "none",
                 border: "none",
@@ -202,7 +219,6 @@ export default function App() {
             />
           </div>
 
-          {/* SEARCH DROPDOWN */}
           <AnimatePresence>
             {searchResults.length > 0 && (
               <motion.div
@@ -230,7 +246,6 @@ export default function App() {
                       cursor: "pointer",
                       borderBottom: "1px solid rgba(255,255,255,0.05)",
                       fontSize: "14px",
-                      transition: "0.2s",
                     }}
                     onMouseOver={(e) => (e.target.style.background = "#334155")}
                     onMouseOut={(e) =>
@@ -270,7 +285,7 @@ export default function App() {
               <Loader2 size={50} color="#38bdf8" />
             </motion.div>
             <p style={{ marginTop: "20px", color: "#94a3b8" }}>
-              Analyzing 14-Day Climate Context...
+              Analyzing 14-Day Context...
             </p>
           </div>
         ) : (
@@ -300,7 +315,7 @@ export default function App() {
                       letterSpacing: "2px",
                     }}
                   >
-                    FORECAST FOR TOMORROW
+                    TOMORROW'S MIN TEMP
                   </p>
                   <h1
                     style={{
@@ -312,7 +327,7 @@ export default function App() {
                     {prediction.prediction_f}°F
                   </h1>
                   <h3 style={{ fontSize: "24px", opacity: 0.9 }}>
-                    {prediction.prediction_c}°C
+                    {prediction.prediction_c.toFixed(1)}°C
                   </h3>
                 </div>
 
@@ -326,11 +341,10 @@ export default function App() {
                 >
                   <Calendar size={20} color="#38bdf8" />
                   <h3 style={{ fontSize: "16px", fontWeight: "600" }}>
-                    Historical Trends
+                    Recent History
                   </h3>
                 </div>
 
-                {/* HISTORY LIST - FIXED VALUE DISPLAY */}
                 {history
                   .slice()
                   .reverse()
@@ -381,7 +395,7 @@ export default function App() {
           zoomControl={false}
           style={{ height: "100%", width: "100%" }}
         >
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer url={MAP_TILES} />
           <MapFly pos={pos} />
           <Marker position={pos} icon={customIcon} />
         </MapContainer>

@@ -1,16 +1,89 @@
-# React + Vite
+# 🗺️ Minima AI | Intelligence Interface
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Minima AI** is a high-end geospatial dashboard designed to visualize AI-driven weather predictions. By combining satellite data with Deep Learning, the application provides precise 24-hour minimum temperature forecasts for any location.
 
-Currently, two official plugins are available:
+* **Live Application:** [https://minimaai.vercel.app/](https://minimaai.vercel.app/)
+* **Backend Engine:** [Link to your Backend Repository]
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* **Geospatial Visualization:** Built with **Leaflet.js** and **React-Leaflet**, featuring "Google Earth" style smooth fly-to animations and dark-themed mapping.
+* **Deep Learning Integration:** Connects to a custom-trained **LSTM (Long Short-Term Memory)** model to predict temperature trends.
+* **Automated Context:** Automatically fetches 14 days of historical weather data via the **Open-Meteo API** to feed the AI engine.
+* **Real-time Status Monitoring:** A custom, animated **Status Pill** provides immediate feedback on the health of the AI Backend.
+* **Modular Architecture:** Cleanly separated into Hooks, Components, and Services for maximum maintainability.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 How It Works
+
+
+
+1.  **Location Selection:** The user searches for a city via the **OpenStreetMap Nominatim API**.
+2.  **Context Extraction:** Upon selection, the app retrieves the last 14 days of historical "Minimum Temperature" data.
+3.  **Neural Inference:** The frontend transmits this temporal sequence to the **Minima AI Backend**.
+4.  **Forecasting:** The LSTM model processes the sequence, identifies patterns, and returns a high-precision prediction for the following day.
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend Library:** React.js (Vite)
+* **State Management:** React Hooks (Custom `useWeather` hook)
+* **Maps & GIS:** Leaflet & React-Leaflet
+* **Animations:** Framer Motion (for transitions and UI effects)
+* **Icons:** Lucide-React
+* **API Client:** Axios
+
+---
+
+## 🧠 Research & Data Assets
+
+This interface acts as the presentation layer for a Software Engineering research project focusing on climate time-series analysis.
+
+* **Algorithm:** Bidirectional LSTM (Long Short-Term Memory)
+* **Mean Absolute Error (MAE):** 8.62°F
+* **Training Notebook:** [Insert your Google Colab or Kaggle Notebook Link Here]
+* **Dataset Source:** [Insert your Kaggle Dataset Link Here]
+
+---
+
+## 💻 Local Development
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-frontend-repo-url>
+    cd Weather-Prediction-Frontend
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Configure Environment Variables:**
+    Create a `.env` file in the root directory:
+    ```env
+    VITE_API_URL=http://localhost:8000
+    VITE_DEFAULT_LAT=6.9271
+    VITE_DEFAULT_LNG=79.8612
+    ```
+
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+
+---
+
+## 📝 Project Structure
+
+```text
+src/
+├── components/     # UI Elements (MapView, Sidebar, StatusPill)
+├── hooks/          # Logic (useWeather custom hook)
+├── config.js       # Centralized configuration & Env handling
+├── App.jsx         # Main Layout & Component Orchestration
+└── main.jsx        # Entry point & Global CSS

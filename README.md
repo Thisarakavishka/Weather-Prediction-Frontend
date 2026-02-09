@@ -3,7 +3,7 @@
 **Minima AI** is a high-end geospatial dashboard designed to visualize AI-driven weather predictions. By combining satellite data with Deep Learning, the application provides precise 24-hour minimum temperature forecasts for any location.
 
 * **Live Application:** [https://minimaai.vercel.app/](https://minimaai.vercel.app/)
-* **Backend Engine:** [Link to your Backend Repository]
+* **Backend Engine:** [https://github.com/Thisarakavishka/Weather-Prediction-Backend](https://github.com/Thisarakavishka/Weather-Prediction-Backend)
 
 ---
 
